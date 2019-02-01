@@ -90,5 +90,15 @@ fi
 
 echo
 echo "Deployment Completed"
-echo "Project is running"
+echo
+
+# Run tests
+echo "Starting tests..."
+deploy-scripts/deployment_test.sh
+check_errs $? "Test failed."
+
+# Completed successfully
+echo
+echo "Project Running"
+echo
 echo
