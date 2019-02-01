@@ -24,7 +24,7 @@ echo
 if [ -e scripts/test.sh ]
 then
     echo "Running custom test script"
-    scripts/build.sh
+    scripts/test.sh
     check_errs $? "Custom test script failed"
 
 else
