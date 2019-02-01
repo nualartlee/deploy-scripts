@@ -16,7 +16,6 @@ source deploy-scripts/common.sh
 projectname=${PWD##*/}
 
 # Print header
-clear
 echo "====================================="
 echo "      Revert $projectname"
 echo

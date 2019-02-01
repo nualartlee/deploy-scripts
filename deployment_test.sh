@@ -15,7 +15,6 @@ source deploy-scripts/common.sh
 projectname=${PWD##*/}
 
 # Print header
-clear
 echo "====================================="
 echo "           Testing $projectname"
 echo
