@@ -20,10 +20,16 @@ echo "====================================="
 echo "           Testing $projectname"
 echo
 
-# Test that jenkins is responding on port 80
-echo "Requesting site..."
-curl -I 172.16.0.3:80 2>&1 | egrep "HTTP"
-check_errs $? "Bad HTTP response when requesting the site"
+# Run any custom test script
+if [ -e scripts/test.sh ]
+then
+    echo "Running custom test script"
+    scripts/build.sh
+    check_errs $? "Custom test script failed"
+
+else
+    echo "No custom test scripts"
+fi
 
 echo
 echo "Deployment passed all tests"
