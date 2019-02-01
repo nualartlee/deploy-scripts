@@ -32,5 +32,4 @@ fi
 
 echo
 echo "Deployment passed all tests"
-echo "Project is running"
 echo
