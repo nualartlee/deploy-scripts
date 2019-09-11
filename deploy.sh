@@ -89,13 +89,13 @@ check_errs $? "Failed stopping containers"
 # Rebuild containers
 echo
 echo "Building containers"
-docker-compose build -f $dockerfile
+docker-compose -f $dockerfile build
 check_errs $? "Failed building containers"
 
 # Run containers in background
 echo
 echo "Starting containers"
-docker-compose up -f $dockerfile -d &
+docker-compose -f $dockerfile up -d &
 check_errs $? "Failed starting containers"
 
 # Allow for startup
