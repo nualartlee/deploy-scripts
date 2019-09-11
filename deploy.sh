@@ -6,6 +6,9 @@
 # Pulls the latest version of the current from remote origin.
 # Creates docker containers, passwords, keys, etc
 #
+# Append -dev to the containing directory to use docker-compose-dev.yml file
+# Otherwise the default docker-compose.yml will be used
+#
 # The project should already be present under git with remote origin
 # set up before running this script
 #
@@ -21,11 +24,32 @@ source deploy-scripts/common.sh
 # Assume the project's name is the same as the containing directory
 projectname=${PWD##*/}
 
+# Set deployment type according to directory name tag
+if [[ "$projectname" =~ ^.*-dev$ ]]
+then
+  type=Development
+else
+  type=Production
+fi
+
 # Print header
 clear
-echo "====================================="
-echo "           Deploy $projectname"
+echo "=============================================================="
+echo "  $projectname $type Deployment"
 echo
+
+# Set docker-compose file
+dockerfile=docker-compose.yml
+if [[ "$type" == "Development" ]]
+then
+  if [ -e docker-compose-dev.yml ]
+  then
+    dockerfile=docker-compose-dev.yml
+  else
+    echo "docker-compose-dev.yml file not found, using default"
+    echo
+  fi
+fi
 
 # Check user is root
 check_errs $EUID "This script must be run as root"
@@ -65,13 +89,13 @@ check_errs $? "Failed stopping containers"
 # Rebuild containers
 echo
 echo "Building containers"
-docker-compose build
+docker-compose build -f $dockerfile
 check_errs $? "Failed building containers"
 
 # Run containers in background
 echo
 echo "Starting containers"
-docker-compose up -d &
+docker-compose up -f $dockerfile -d &
 check_errs $? "Failed starting containers"
 
 # Allow for startup
