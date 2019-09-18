@@ -110,7 +110,7 @@ sleep 5
 # Check that no container exited with errors
 echo
 echo "Checking container status"
-if egrep 'Exit [^0]' ${docker-compose -f $dockerfile ps}; then
+if docker-compose -f $dockerfile ps | egrep -q 'Exit [^0]'; then
   check_errs 1 "Containers exited with errors"
 fi
 
