@@ -107,6 +107,13 @@ echo
 echo "Startup delay..."
 sleep 5
 
+# Check that no container exited with errors
+echo
+echo "Checking container status"
+if egrep 'Exit [^0]' ${docker-compose -f $dockerfile ps}; then
+  check_errs 1 "Containers exited with errors"
+fi
+
 # Run any custom post_build script
 if [ -e scripts/post_build.sh ]
 then
