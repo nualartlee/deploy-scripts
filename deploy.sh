@@ -99,10 +99,12 @@ check_errs $? "Failed building containers"
 # Run containers in background
 echo
 echo "Starting containers"
-docker-compose -f $dockerfile up -d &
+docker-compose -f $dockerfile up -d
 check_errs $? "Failed starting containers"
 
 # Allow for startup
+echo
+echo "Startup delay..."
 sleep 5
 
 # Run any custom post_build script
