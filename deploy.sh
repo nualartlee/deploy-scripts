@@ -67,6 +67,10 @@ echo
 sudo -u $projectowner git pull
 check_errs $? "Unable to pull from remote repository"
 
+# Pull latest submodules' versions from remote origins
+sudo -u $projectowner git pull --recurse-submodules
+check_errs $? "Unable to pull submodules from remote repositories"
+
 # Run any custom build script
 if [ -e scripts/build.sh ]
 then
