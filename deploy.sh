@@ -63,12 +63,27 @@ check_package docker
 check_package docker-compose
 echo
 
+# Check that a deploy ssh key is present
+echo
+echo "Checking deploy ssh key"
+deploykey="/home/${projectowner}/.ssh/id_${projectname}"
+if [ -e $deploykey ]
+then
+  echo "Deploy ssh key found: ${deploykey}"
+else
+  check_errs 1 "Deploy ssh key missing: ${deploykey}"
+fi
+
 # Pull latest version from remote origin
-sudo -u $projectowner git pull
+echo
+echo "Pull latest version from git remote"
+ssh-agent bash -c "ssh-add ${deploykey}; git pull"
 check_errs $? "Unable to pull from remote repository"
 
 # Pull latest submodules' versions from remote origins
-sudo -u $projectowner git pull --recurse-submodules origin master
+echo
+echo "Pull latest submodules' versions from git remote"
+ssh-agent bash -c "ssh-add ${deploykey}; git pull --recurse-submodules origin master"
 check_errs $? "Unable to pull submodules from remote repositories"
 
 # Run any custom build script
