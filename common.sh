@@ -5,11 +5,14 @@
 # Error check function
 # Param 1: return code, pass the last one with $?
 # Param 2: error text to display
+# Param 3: ok text to display
 check_errs()
 {
   if [ "${1}" -ne "0" ]; then
     echo "ERROR # ${1} : ${2}"
     exit ${1}
+  else
+    echo ${3}
   fi
 }
 
