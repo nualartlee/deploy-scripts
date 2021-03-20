@@ -6,6 +6,9 @@
 # Pulls the latest version of the current from remote origin.
 # Creates docker containers, passwords, keys, etc
 #
+# Append -dev to the containing directory to use docker-compose-dev.yml file
+# Otherwise the default docker-compose.yml will be used
+#
 # The project should already be present under git with remote origin
 # set up before running this script
 #
@@ -21,11 +24,32 @@ source deploy-scripts/common.sh
 # Assume the project's name is the same as the containing directory
 projectname=${PWD##*/}
 
+# Set deployment type according to directory name tag
+if [[ "$projectname" =~ ^.*-dev$ ]]
+then
+  type=Development
+else
+  type=Production
+fi
+
 # Print header
 clear
-echo "====================================="
-echo "           Deploy $projectname"
+echo "=============================================================="
+echo "  $projectname $type Deployment"
 echo
+
+# Set docker-compose file
+dockerfile=docker-compose.yml
+if [[ "$type" == "Development" ]]
+then
+  if [ -e docker-compose-dev.yml ]
+  then
+    dockerfile=docker-compose-dev.yml
+  else
+    echo "docker-compose-dev.yml file not found, using default"
+    echo
+  fi
+fi
 
 # Check user is root
 check_errs $EUID "This script must be run as root"
@@ -39,9 +63,28 @@ check_package docker
 check_package docker-compose
 echo
 
+# Check that a deploy ssh key is present
+echo
+echo "Checking deploy ssh key"
+deploykey="/home/${projectowner}/.ssh/id_${projectname}"
+if [ -e $deploykey ]
+then
+  echo "Deploy ssh key found: ${deploykey}"
+else
+  check_errs 1 "Deploy ssh key missing: ${deploykey}"
+fi
+
 # Pull latest version from remote origin
-sudo -u $projectowner git pull
+echo
+echo "Pull latest version from git remote"
+ssh-agent bash -c "ssh-add ${deploykey}; git pull"
 check_errs $? "Unable to pull from remote repository"
+
+# Pull latest submodules' versions from remote origins
+echo
+echo "Pull latest submodules' versions from git remote"
+ssh-agent bash -c "ssh-add ${deploykey}; git pull --recurse-submodules origin master"
+check_errs $? "Unable to pull submodules from remote repositories"
 
 # Run any custom build script
 if [ -e scripts/build.sh ]
@@ -65,17 +108,26 @@ check_errs $? "Failed stopping containers"
 # Rebuild containers
 echo
 echo "Building containers"
-docker-compose build
+docker-compose -f $dockerfile build
 check_errs $? "Failed building containers"
 
 # Run containers in background
 echo
 echo "Starting containers"
-docker-compose up -d &
+docker-compose -f $dockerfile up -d
 check_errs $? "Failed starting containers"
 
 # Allow for startup
+echo
+echo "Startup delay..."
 sleep 5
+
+# Check that no container exited with errors
+echo
+echo "Checking container status"
+if docker-compose -f $dockerfile ps | egrep -q 'Exit [^0]'; then
+  check_errs 1 "Containers exited with errors"
+fi
 
 # Run any custom post_build script
 if [ -e scripts/post_build.sh ]

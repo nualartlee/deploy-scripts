@@ -30,7 +30,7 @@ projectowner=$(ls -ld $PWD | awk '{print $3}')
 previous=$(sudo -u $projectowner git log --format=%H | sed -n 2p)
 check_errs $? "Unable to determine previous git version hash"
 
-# Rollback previous version
+# Rollback to previous version
 sudo -u $projectowner git reset $previous
 check_errs $? "Unable to git-reset previous version from repository"
 
@@ -38,58 +38,13 @@ check_errs $? "Unable to git-reset previous version from repository"
 sudo -u $projectowner git stash
 check_errs $? "Unable to stash changes in repository"
 
-# Run any custom build script
-if [ -e scripts/build.sh ]
-then
-    echo "Running custom build script"
-    scripts/build.sh
-    check_errs $? "Custom build script failed"
-else
-    echo "No custom build scripts"
-fi
-
-# Ensure docker is running
-service docker start
-check_errs $? "Failed starting docker"
-
-# Stop containers
-docker-compose down
-check_errs $? "Failed stopping containers"
-
-# Rebuild containers
-echo
-echo "Building containers"
-docker-compose build
-check_errs $? "Failed building containers"
-
-# Run containers in background
-echo
-echo "Starting containers"
-docker-compose up -d &
-check_errs $? "Failed starting containers"
-
-# Allow for startup
-sleep 5
-
-# Run any custom post_build script
-if [ -e scripts/post_build.sh ]
-then
-    echo "Running custom post_build script"
-    scripts/post_build.sh
-    check_errs $? "Custom post_build script failed"
-
-else
-    echo "No custom post_build scripts"
-fi
+# Deploy previous version
+deploy-scripts/deploy.sh
+check_errs $? "Rollback deployment failed."
 
 echo
 echo "Rollback Completed"
 echo
-
-# Run tests
-echo "Starting tests..."
-deploy-scripts/deployment_test.sh
-check_errs $? "Test failed."
 
 # Completed successfully
 echo
